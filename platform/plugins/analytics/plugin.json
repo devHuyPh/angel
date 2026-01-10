@@ -1,0 +1,11 @@
+{
+    "id": "botble/analytics",
+    "name": "Analytics",
+    "namespace": "Botble\\Analytics\\",
+    "provider": "Botble\\Analytics\\Providers\\AnalyticsServiceProvider",
+    "author": "HisotechGroup",
+    "url": "https://hisotechgroup.com/",
+    "version": "2.1.6",
+    "description": "Theo dõi dữ liệu từ Google Analytics",
+    "minimum_core_version": "7.3.0"
+}

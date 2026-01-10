@@ -1,0 +1,24 @@
+.force-hide {
+  display: none !important;
+}
+
+.product-specification-table {
+    position: relative;
+}
+
+.specification-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.6); /* mờ trắng, bạn có thể đổi màu */
+    z-index: 10;
+    pointer-events: all; /* chặn click bên dưới */
+    cursor: not-allowed;
+}
+
+.wrap-relation-product{
+  display: none !important;
+}
+

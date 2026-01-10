@@ -1,0 +1,344 @@
+{
+    "users": {
+      "index": true,
+      "create": true,
+      "edit": true,
+      "destroy": true
+    },
+    "roles": {
+      "index": true,
+      "create": true,
+      "edit": true,
+      "destroy": true
+    },
+    "core": {
+      "system": true,
+      "cms": true,
+      "manage_license": true,
+      "tools": true,
+      "appearance": true
+    },
+    "systems": {
+      "cronjob": true
+    },
+    "tools": {
+      "data_synchronize": true
+    },
+    "media": {
+      "index": true
+    },
+    "files": {
+      "index": true,
+      "create": true,
+      "edit": true,
+      "trash": true,
+      "destroy": true
+    },
+    "folders": {
+      "index": true,
+      "create": true,
+      "edit": true,
+      "trash": true,
+      "destroy": true
+    },
+    "settings": {
+      "index": true,
+      "common": true,
+      "options": true,
+      "email": true,
+      "media": true,
+      "admin_appearance": true,
+      "cache": true,
+      "datatables": true,
+      "email_rules": true,
+      "others": true,
+      "website_tracking": true
+    },
+    "menus": {
+      "index": true,
+      "create": true,
+      "edit": true,
+      "destroy": true
+    },
+    "optimize": {
+      "settings": true
+    },
+    "pages": {
+      "index": true,
+      "create": true,
+      "edit": true,
+      "destroy": true
+    },
+    "plugins": {
+      "index": true,
+      "edit": true,
+      "remove": true,
+      "marketplace": true,
+      "blog": true,
+      "ecommerce": true,
+      "faq": true,
+      "translation": true
+    },
+    "theme": {
+      "index": true,
+      "activate": true,
+      "remove": true,
+      "options": true,
+      "custom_css": true,
+      "custom_js": true,
+      "custom_html": true,
+      "robots_txt": true
+    },
+    "widgets": {
+      "index": true
+    },
+    "ads": {
+      "index": true,
+      "create": true,
+      "edit": true,
+      "destroy": true,
+      "settings": true
+    },
+    "analytics": {
+      "general": true,
+      "page": true,
+      "browser": true,
+      "referrer": true,
+      "settings": true
+    },
+    "announcements": {
+      "index": true,
+      "create": true,
+      "edit": true,
+      "destroy": true,
+      "settings": true
+    },
+    "audit_log": {
+      "index": true,
+      "destroy": true
+    },
+    "backups": {
+      "index": true,
+      "create": true,
+      "restore": true,
+      "destroy": true
+    },
+    "posts": {
+      "index": true,
+      "create": true,
+      "edit": true,
+      "destroy": true,
+      "export": true,
+      "import": true
+    },
+    "categories": {
+      "index": true,
+      "create": true,
+      "edit": true,
+      "destroy": true,
+      "export": true,
+      "import": true
+    },
+    "tags": {
+      "index": true,
+      "create": true,
+      "edit": true,
+      "destroy": true
+    },
+    "blog": {
+      "settings": true
+    },
+    "captcha": {
+      "settings": true
+    },
+    "contacts": {
+      "index": true,
+      "edit": true,
+      "destroy": true,
+      "custom_fields": true,
+      "settings": true
+    },
+    "ecommerce": {
+      "report_index": true,
+      "product_prices": {
+        "index": true,
+        "edit": true
+      },
+      "product_inventory": {
+        "index": true,
+        "edit": true
+      },
+      "settings": {
+        "general": true,
+        "currencies": true,
+        "products": true,
+        "product_search": true,
+        "digital_products": true,
+        "store_locators": true,
+        "invoices": true,
+        "product_reviews": true,
+        "customers": true,
+        "shopping": true,
+        "taxes": true,
+        "shipping": true,
+        "tracking": true,
+        "standard_and_format": true,
+        "checkout": true,
+        "return": true,
+        "flash_sale": true,
+        "product_specification": true
+      },
+      "shipping_rule_items": {
+        "index": true,
+        "create": true,
+        "edit": true,
+        "destroy": true,
+        "bulk_import": true
+      },
+      "product_specification": {
+        "index": true
+      },
+      "specification_groups": {
+        "index": true,
+        "create": true,
+        "edit": true,
+        "destroy": true
+      },
+      "specification_attributes": {
+        "index": true,
+        "create": true,
+        "edit": true,
+        "destroy": true
+      },
+      "specification_tables": {
+        "index": true,
+        "create": true,
+        "edit": true,
+        "destroy": true
+      }
+    },
+    "faq": {
+      "index": true,
+      "create": true,
+      "edit": true,
+      "destroy": true,
+      "settings": true
+    },
+    "galleries": {
+      "index": true,
+      "create": true,
+      "edit": true,
+      "destroy": true
+    },
+    "languages": {
+      "index": true,
+      "create": true,
+      "edit": true,
+      "destroy": true
+    },
+    "location": {
+      "country": {
+        "index": true,
+        "create": true,
+        "edit": true,
+        "destroy": true
+      },
+      "state": {
+        "index": true,
+        "create": true,
+        "edit": true,
+        "destroy": true
+      },
+      "city": {
+        "index": true,
+        "create": true,
+        "edit": true,
+        "destroy": true
+      }
+    },
+    "marketplace": {
+      "index": true,
+      "store": {
+        "index": true,
+        "create": true,
+        "edit": true,
+        "destroy": true,
+        "view": true,
+        "revenue_create": true
+      },
+      "withdrawal": {
+        "index": true,
+        "edit": true,
+        "destroy": true,
+        "invoice": true
+      },
+      "vendors": {
+        "index": true,
+        "unverified_index": true,
+        "control": true,
+        "unverified_edit": true
+      },
+      "reports": true,
+      "settings": true
+    },
+    "newsletter": {
+      "index": true,
+      "destroy": true,
+      "settings": true
+    },
+    "payment": {
+      "index": true,
+      "settings": true,
+      "destroy": true,
+      "logs": {
+        "index": true,
+        "show": true,
+        "destroy": true
+      }
+    },
+    "request_log": {
+      "index": true,
+      "destroy": true
+    },
+    "sale_popup": {
+      "settings": true
+    },
+    "simple_slider": {
+      "index": true,
+      "create": true,
+      "edit": true,
+      "destroy": true,
+      "settings": true
+    },
+    "social_login": {
+      "settings": true
+    },
+    "testimonial": {
+      "index": true,
+      "create": true,
+      "edit": true,
+      "destroy": true
+    },
+    "translations": {
+      "locales": true,
+      "theme_translations": true,
+      "index": true,
+      "theme_export": true,
+      "other_export": true,
+      "theme_import": true,
+      "other_import": true
+    },
+    "api": {
+      "settings": true,
+      "sanctum_token": {
+        "index": true,
+        "create": true,
+        "destroy": true
+      }
+    },
+    "kyc": {
+      "manager_form": true,
+      "duyet": true
+    }
+  }
+  

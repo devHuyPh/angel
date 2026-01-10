@@ -1,0 +1,11 @@
+{
+    "id": "truongqv12/popup-chat",
+    "name": "Popup Chat",
+    "namespace": "Botble\\PopupChat\\",
+    "provider": "Botble\\PopupChat\\Providers\\PopupChatServiceProvider",
+    "author": "HisotechGroup",
+    "url": "https://hisotechgroup.com/",
+    "version": "1.0.0",
+    "description": "Hiển thị icon popup chat",
+    "minimum_core_version": "7.0.0"
+}

@@ -1,0 +1,8 @@
+---------------style menu header
+platform/themes/shofy/layouts/base.blade.php
+
+----------------menu mobile sticky bottom
+platform\themes\shofy\partials\navigation-bar.blade.php
+
+----------------menu mobile sidebar
+platform/themes/shofy/partials/main-menu.blade.php

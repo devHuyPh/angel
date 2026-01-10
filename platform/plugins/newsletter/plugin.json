@@ -1,0 +1,11 @@
+{
+    "id": "botble/newsletter",
+    "name": "Newsletter",
+    "namespace": "Botble\\Newsletter\\",
+    "provider": "Botble\\Newsletter\\Providers\\NewsletterServiceProvider",
+    "author": "HisotechGroup",
+    "url": "https://hisotechgroup.com/",
+    "version": "2.0.6",
+    "description": "Newsletter",
+    "minimum_core_version": "7.3.0"
+}

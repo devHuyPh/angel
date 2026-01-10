@@ -1,0 +1,33 @@
+<?php
+
+return [
+    'name' => 'Quảng cáo',
+    'create' => 'Quảng cáo mới',
+    'edit' => 'Chỉnh sửa quảng cáo',
+    'location' => 'Vị trí',
+    'location_helper' => 'Vị trí được sử dụng để hiển thị quảng cáo trên trang web, nó được đăng ký trong chủ đề. Bạn có thể sử dụng vị trí này để hiển thị quảng cáo trên trang web.',
+    'url' => 'URL',
+    'expired_at' => 'Hết hạn vào lúc',
+    'expired_at_helper' => 'Quảng cáo sẽ tự động bị vô hiệu hóa sau ngày này. Nếu loại Quảng cáo là Google Adsense, nó sẽ không bao giờ hết hạn.',
+    'key' => 'Khóa',
+    'shortcode' => 'Mã ngắn',
+    'clicked' => 'Đã nhấp',
+    'not_set' => 'Chưa được thiết lập',
+    'adblock_warning' => 'Nếu bạn đang sử dụng tiện ích mở rộng trình duyệt Adblock, trước tiên bạn cần tắt tiện ích này trên trang web của mình. Nó có thể chặn quảng cáo của bạn nếu được kích hoạt trên trang web của bạn! <br /> Mẹo: Tên hình ảnh KHÔNG NÊN chứa một số từ khóa quảng cáo (quảng cáo, khuyến mãi...)',
+    'select_ad' => 'Chọn quảng cáo',
+    'open_in_new_tab' => 'Mở trong tab mới?',
+    'ads_type' => 'Loại quảng cáo',
+    'custom_ad' => 'Quảng cáo tùy chỉnh',
+    'google_adsense_slot_id' => 'ID khe Google AdSense',
+    'settings' => [
+        'title' => 'Cài đặt quảng cáo',
+        'description' => 'Quản lý cài đặt quảng cáo',
+        'google_adsense_auto_ads_snippet' => 'Đoạn mã quảng cáo tự động Google AdSense',
+        'google_adsense_auto_ads_snippet_helper' => 'Bạn có thể lấy đoạn mã này từ :link, vào Quảng cáo → Lấy mã → Sao chép đoạn mã và dán vào đây.',
+        'google_adsense_unit_ads_client_id' => 'ID khách hàng quảng cáo đơn vị Google AdSense',
+        'google_adsense_unit_ads_client_id_helper' => 'Bạn có thể lấy đoạn mã này từ :link, vào Quảng cáo → Quảng cáo đơn vị → Lấy mã → Sao chép ID khách hàng và dán vào đây.',
+        'google_adsense_unit_ads_where_to_get_client_id' => 'Lấy ID khách hàng Google AdSense ở đâu?',
+        'google_adsense_unit_ads_guide_to_get_client_id' => 'Khi lấy đoạn mã của quảng cáo đơn vị, bạn có thể thấy thuộc tính này <code>data-ad-client="ca-pub-123456789"</code>, <code>ca-pub-123456789</code> là ID khách hàng quảng cáo đơn vị.',
+        'google_adsense_unit_ads_guide_example_snippet' => 'Ví dụ về đoạn mã quảng cáo đơn vị Google AdSense:',
+    ],
+];

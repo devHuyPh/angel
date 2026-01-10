@@ -1,0 +1,23 @@
+.main-menu.menu-style-3>nav>ul>li,    .main-menu.menu-style-3>nav>ul>li {
+	margin-inline-end: 10px;
+}
+  .main-menu.menu-style-3>nav>ul>li .tp-submenu {
+    text-align: start;
+    overflow-y: auto; /* Tạo thanh cuộn dọc */
+    white-space: nowrap; /* Ngăn xuống dòng */
+    max-height: 400px;
+}
+.tp-blog-thumb-2 img{
+  height: 100%;
+}
+
+.tp-blog-list-thumb img{
+  //height: auto;
+  image-rendering: pixelated;
+}
+.breadcrumb__area.include-bg  {
+	padding: 50px!important;
+}
+.auth-card__banner {
+  height: 100%!important;
+}

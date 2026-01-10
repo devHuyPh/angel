@@ -1,0 +1,62 @@
+[
+  {
+    "name": "Việt Nam",
+    "code": "vn",
+    "dialCode": "+84",
+    "flag": "vendor/core/core/base/img/flags/vn.svg"
+  },
+  {
+    "name": "Hoa Kỳ",
+    "code": "us",
+    "dialCode": "+1",
+    "flag": "vendor/core/core/base/img/flags/us.svg"
+  },
+  {
+    "name": "Anh",
+    "code": "gb",
+    "dialCode": "+44",
+    "flag": "vendor/core/core/base/img/flags/gb.svg"
+  },
+  {
+    "name": "Nhật Bản",
+    "code": "jp",
+    "dialCode": "+81",
+    "flag": "vendor/core/core/base/img/flags/jp.svg"
+  },
+  {
+    "name": "Hàn Quốc",
+    "code": "kr",
+    "dialCode": "+82",
+    "flag": "vendor/core/core/base/img/flags/kr.svg"
+  },
+  {
+    "name": "Trung Quốc",
+    "code": "cn",
+    "dialCode": "+86",
+    "flag": "vendor/core/core/base/img/flags/cn.svg"
+  },
+  {
+    "name": "Pháp",
+    "code": "fr",
+    "dialCode": "+33",
+    "flag": "vendor/core/core/base/img/flags/fr.svg"
+  },
+  {
+    "name": "Đức",
+    "code": "de",
+    "dialCode": "+49",
+    "flag": "vendor/core/core/base/img/flags/de.svg"
+  },
+  {
+    "name": "Ý",
+    "code": "it",
+    "dialCode": "+39",
+    "flag": "vendor/core/core/base/img/flags/it.svg"
+  },
+  {
+    "name": "Ấn Độ",
+    "code": "in",
+    "dialCode": "+91",
+    "flag": "vendor/core/core/base/img/flags/in.svg"
+  }
+]

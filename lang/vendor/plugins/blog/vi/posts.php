@@ -1,0 +1,45 @@
+<?php
+
+return [
+    'create' => 'Thêm bài viết',
+    'form' => [
+        'name' => 'Tên',
+        'name_placeholder' => 'Tên bài viết (Tối đa 120 kí tự)',
+        'description' => 'Mô tả',
+        'description_placeholder' => 'Mô tả ngắn cho bài viết (Tối đa 400 kí tự)',
+        'categories' => 'Chuyên mục',
+        'tags' => 'Từ khóa',
+        'tags_placeholder' => 'Thêm từ khóa',
+        'content' => 'Nội dung',
+        'is_featured' => 'Bài viết nổi bật?',
+        'note' => 'Nội dung ghi chú',
+        'format_type' => 'Định dạng',
+    ],
+    'cannot_delete' => 'Không thể xóa bài viết',
+    'post_deleted' => 'Xóa bài viết thành công',
+    'posts' => 'Bài viết',
+    'post' => 'Bài viết',
+    'edit_this_post' => 'Sửa bài viết này',
+    'no_new_post_now' => 'Hiện tại không có bài viết mới!',
+    'menu_name' => 'Bài viết',
+    'widget_posts_recent' => 'Bài viết gần đây',
+    'categories' => 'Danh mục',
+    'category' => 'Danh mục',
+    'author' => 'Tác giả',
+    'export' => [
+        'description' => 'Xuất bài đăng sang tệp CSV/Excel.',
+        'total' => 'Tổng số bài viết',
+    ],
+    'import' => [
+        'description' => 'Nhập bài đăng từ tệp CSV/Excel.',
+        'done_message' => ':created bài viết đã tạo và :updated bài viết đã cập nhật.',
+        'rules' => [
+            'nullable_string_max' => ':attribute có thể để trống hoặc là một chuỗi có độ dài tối đa là :max ký tự nếu được cung cấp.',
+            'sometimes_array' => ':attribute có thể để trống hoặc phải là một mảng nếu được cung cấp.',
+            'in' => ':attribute phải là một trong các giá trị sau: :values.',
+            'nullable_string' => ':attribute có thể để trống hoặc phải là chuỗi nếu được cung cấp.',
+            'nullable_string_max_in' => ':attribute có thể để trống hoặc phải là một chuỗi có độ dài tối đa là :max ký tự nếu được cung cấp và phải là một trong các giá trị sau: :values.',
+        ],
+    ],
+    'edit' => 'Sửa bài viết',
+];

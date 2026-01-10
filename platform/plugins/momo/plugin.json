@@ -1,0 +1,11 @@
+{
+    "id": "binjuhor/momo",
+    "name": "MoMo Payment Gateway",
+    "namespace": "Binjuhor\\MoMo\\",
+    "provider": "Binjuhor\\MoMo\\Providers\\MoMoServiceProvider",
+    "author": "HisotechGroup",
+    "url": "https://hisotechgroup.com/",
+    "version": "0.1.0",
+    "description": "MoMo payment gateway integration",
+    "require": ["payment"]
+}

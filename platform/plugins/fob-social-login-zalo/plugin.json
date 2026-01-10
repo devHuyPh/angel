@@ -1,0 +1,14 @@
+{
+    "id": "friendsofbotble/social-login-zalo",
+    "name": "Social Login Zalo",
+    "namespace": "FriendsOfBotble\\SocialLogin\\Zalo\\",
+    "provider": "FriendsOfBotble\\SocialLogin\\Zalo\\Providers\\SocialLoginZaloServiceProvider",
+    "author": "HisotechGroup",
+    "url": "https://hisotechgroup.com/",
+    "version": "1.0.3",
+    "minimum_core_version": "7.1.0",
+    "description": "Support Zalo login for Botble CMS",
+    "require": [
+        "social-login"
+    ]
+}

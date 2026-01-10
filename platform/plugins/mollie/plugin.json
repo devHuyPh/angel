@@ -1,0 +1,11 @@
+{
+    "id": "botble/mollie",
+    "name": "Mollie Payment Gateway",
+    "namespace": "Botble\\Mollie\\",
+    "provider": "Botble\\Mollie\\Providers\\MollieServiceProvider",
+    "author": "HisotechGroup",
+    "url": "https://hisotechgroup.com/",
+    "version": "1.0.4",
+    "description": "Mollie payment gateway integration",
+    "minimum_core_version": "7.3.0"
+}
