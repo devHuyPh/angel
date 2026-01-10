@@ -409,7 +409,10 @@
         "e2df835384821fa5036252a0581ba12b@ecommerce_categories_for_widgets_8ec736f64ade928132863ef81b956d3d",
         "e2df835384821fa5036252a0581ba12b@ecommerce_categories_for_widgets_e2197665e8afcb3f1fdcb1470c02566f",
         "e2df835384821fa5036252a0581ba12b@ecommerce_categories_for_widgets_65c098a9f243b3049664e82bdb313536",
-        "e2df835384821fa5036252a0581ba12b@ecommerce_categories_for_widgets_0a209da5bed772237efac74f220f344c"
+        "e2df835384821fa5036252a0581ba12b@ecommerce_categories_for_widgets_0a209da5bed772237efac74f220f344c",
+        "e2df835384821fa5036252a0581ba12b@ecommerce_categories_for_widgets_9de3706e05c30e8f54bdfccc7b3d77ca",
+        "e2df835384821fa5036252a0581ba12b@ecommerce_categories_for_widgets_cf4359e4a7a4acd47f4f76080662ed1c",
+        "e2df835384821fa5036252a0581ba12b@ecommerce_categories_for_widgets_ccbfc534560809b386cada049852679b"
     ],
     "Botble\\Ecommerce\\Services\\HandleShippingFeeService": [
         "66d6c800acf0bbfe034c13e9e2145ba3@ad4e06db2092945974f7350c0e0c8162",
@@ -650,7 +653,8 @@
         "66d6c800acf0bbfe034c13e9e2145ba3@3d408cf7f022650fcd8c3e1a17f8e750",
         "66d6c800acf0bbfe034c13e9e2145ba3@be5ac6e51200ea3c1b71c5a24b430b15",
         "66d6c800acf0bbfe034c13e9e2145ba3@8630f409aae057c383e86a58591d4edc",
-        "66d6c800acf0bbfe034c13e9e2145ba3@656e2386c6d491d9b43cdee6525f4cda"
+        "66d6c800acf0bbfe034c13e9e2145ba3@656e2386c6d491d9b43cdee6525f4cda",
+        "66d6c800acf0bbfe034c13e9e2145ba3@f214e8d29433832174514b4a0653c77f"
     ],
     "Botble\\ACL\\Models\\UserMeta": [
         "65b83ad065dbeb5292d94ab9580d9273@user-meta-1"

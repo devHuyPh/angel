@@ -26,8 +26,8 @@ class PopupChatServiceProvider extends ServiceProvider
                 asset('vendor/core/plugins/popup-chat/css/popup-chat.min.css')
             );
 
-        add_filter(THEME_FRONT_FOOTER, function (string|null $data): string {
-            return $data . view('plugins/popup-chat::show');
-        });
+        // add_filter(THEME_FRONT_FOOTER, function (string|null $data): string {
+        //     return $data . view('plugins/popup-chat::show');
+        // });
     }
 }
