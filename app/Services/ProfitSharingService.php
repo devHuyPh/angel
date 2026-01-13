@@ -108,6 +108,10 @@ class ProfitSharingService
     {
         DB::transaction(function () use ($accumulated, $rankMap): void {
             foreach ($accumulated as $rankId => $totalAmountPerUser) {
+                if ($totalAmountPerUser <= 0) {
+                    continue;
+                }
+
                 /** @var \App\Models\Ranking|null $rank */
                 $rank = $rankMap->get($rankId);
                 $customers = Customer::where('rank_id', $rankId)->get();

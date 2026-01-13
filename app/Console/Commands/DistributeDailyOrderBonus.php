@@ -62,6 +62,11 @@ class DistributeDailyOrderBonus extends Command
         $bonusPerCustomer = round($bonusAmount / $totalActiveCustomers, 2);
         $this->info('Mỗi người dùng sẽ nhận được: ' .$bonusPerCustomer);
 
+        if ($bonusPerCustomer <= 0) {
+            $this->warn('Tiền thưởng mỗi người bằng 0, không tạo thông báo hoặc cập nhật ví.');
+            return 0;
+        }
+
         DB::beginTransaction();
         try {
             $updatedCount = 0;

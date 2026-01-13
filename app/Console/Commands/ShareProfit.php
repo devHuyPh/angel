@@ -107,6 +107,9 @@ class ShareProfit extends Command
 
             // Cập nhật số tiền cuối cùng vào ví của từng rank
             foreach ($accumulatedRanks as $rankId => $totalAmountPerUser) {
+                if ($totalAmountPerUser <= 0) {
+                    continue;
+                }
                 // Cập nhật số dư trong bảng customers
                 // $customers = Customer::where('rank_id', $rankId);
 
