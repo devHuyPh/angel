@@ -154,11 +154,6 @@ AdminHelper::registerRoutes(function (): void {
         });
     });
 });
-Route::group(['prefix' => 'ajax', 'middleware' => ['web']], function () {
-    Route::post('checkout/stores-near-you', [PublicCheckoutController::class, 'getStoresNearYou'])
-        ->name('public.ajax.checkout.stores-near-you');
-});
-
 Theme::registerRoutes(function (): void {
     Route::group(['namespace' => 'Botble\Ecommerce\Http\Controllers\Fronts'], function (): void {
         Route::group(

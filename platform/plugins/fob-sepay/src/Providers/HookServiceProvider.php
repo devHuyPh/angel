@@ -4,6 +4,7 @@ namespace FriendsOfBotble\SePay\Providers;
 
 use Botble\Ecommerce\Models\Order;
 use Botble\Payment\Enums\PaymentMethodEnum;
+use Botble\Payment\Enums\PaymentStatusEnum;
 use Botble\Payment\Facades\PaymentMethods;
 use FriendsOfBotble\SePay\Forms\SePayPaymentMethodForm;
 use FriendsOfBotble\SePay\SePay;
@@ -53,41 +54,84 @@ class HookServiceProvider extends ServiceProvider
                 $orders = $collection;
             }
 
-            $payment = $orders->first()->payment;
+            $payments = $orders
+                ->map(fn (Order $order) => $order->payment)
+                ->filter(fn ($payment) => $payment && $payment->payment_channel->getValue() === SEPAY_PAYMENT_METHOD_NAME)
+                ->filter(fn ($payment) => $payment->currency === 'VND')
+                ->unique('id');
 
-            if (
-                ! $payment
-                || $payment->payment_channel->getValue() !== SEPAY_PAYMENT_METHOD_NAME
-                || $payment->currency !== 'VND'
-            ) {
+            if ($payments->isEmpty()) {
                 return $html;
             }
 
-            $orderAmount = (float) ($payment->metadata['wallet_remaining'] ?? 0);
-            $paymentAmount = (float) $payment->amount;
+            $paymentGroups = $payments->groupBy(function ($payment) {
+                return $payment->charge_id ?: ('payment_' . $payment->getKey());
+            });
 
-            if ($orderAmount <= 0 && $paymentAmount > 0) {
-                $orderAmount = $paymentAmount;
-            }
+            $paymentData = $paymentGroups->map(function ($paymentGroup) use ($orders) {
+                $primaryPayment = $paymentGroup->first();
+                $chargeId = $primaryPayment->charge_id ?: ('PAY-' . $primaryPayment->getKey());
 
-            if ($orderAmount <= 0) {
-                foreach ($orders as $item) {
-                    $orderAmount += $item->amount;
+                $paymentOrders = $orders->filter(function ($order) use ($chargeId, $primaryPayment) {
+                    $payment = $order->payment;
+
+                    if (! $payment) {
+                        return false;
+                    }
+
+                    if ($payment->charge_id && $payment->charge_id === $chargeId) {
+                        return true;
+                    }
+
+                    if (! $payment->charge_id && $payment->getKey() === $primaryPayment->getKey()) {
+                        return true;
+                    }
+
+                    return false;
+                });
+
+                $paymentMeta = $primaryPayment->metadata ?? [];
+                $walletRemaining = data_get($paymentMeta, 'wallet_remaining', data_get($paymentMeta, 'remaining_amount'));
+                $orderAmount = 0;
+
+                if ($walletRemaining !== null) {
+                    $orderAmount = (float) $walletRemaining;
+                } else {
+                    foreach ($paymentOrders as $item) {
+                        $allocationRemaining = data_get($paymentMeta, "wallet_payment.allocations.{$item->id}.remaining");
+
+                        if ($allocationRemaining !== null) {
+                            $payAmount = (float) $allocationRemaining;
+                        } else {
+                            $payAmount = (float) $item->amount;
+                        }
+
+                        $orderAmount += $payAmount;
+                    }
+
+                    if ($orderAmount <= 0) {
+                        $orderAmount = (float) $paymentOrders->sum('amount') ?: (float) $paymentGroup->sum('amount');
+                    }
                 }
-            }
 
-            $chargeId = $payment->charge_id;
+                $isCompleted = $paymentGroup->every(fn ($payment) => $payment->status == PaymentStatusEnum::COMPLETED);
+
+                return [
+                    'payment' => $primaryPayment,
+                    'orderAmount' => $orderAmount,
+                    'chargeId' => $chargeId,
+                    'imageUrl' => SePay::getQRCodeUrl($orderAmount, $chargeId),
+                    'isCompleted' => $isCompleted,
+                ];
+            });
 
             $html .= view(
                 'plugins/fob-sepay::bank-info',
                 [
-                    'orderAmount' => $orderAmount,
-                    'imageUrl' => SePay::getQRCodeUrl($orderAmount, $chargeId),
+                    'paymentData' => $paymentData,
                     'bank' => SePay::getBankById(get_payment_setting('bank', SEPAY_PAYMENT_METHOD_NAME)),
                     'bankAccountNumber' => get_payment_setting('account_number', SEPAY_PAYMENT_METHOD_NAME),
                     'bankAccountHolder' => get_payment_setting('account_holder', SEPAY_PAYMENT_METHOD_NAME),
-                    'chargeId' => $chargeId,
-                    'payment' => $payment,
                 ]
             )->render();
 

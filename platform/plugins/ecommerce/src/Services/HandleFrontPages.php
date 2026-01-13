@@ -29,6 +29,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 class HandleFrontPages
 {
@@ -201,6 +202,41 @@ class HandleFrontPages
 
                 $request->merge(['categories' => [...$categoryIds, ...$requestCategories]]);
 
+                $storeOptions = collect();
+                $selectedStoreId = $request->integer('store');
+                $shouldShowStoreModal = false;
+
+                if (is_plugin_active('marketplace')) {
+                    $storeOptions = Product::query()
+                        ->select(['id', 'store_id'])
+                        ->wherePublished()
+                        ->where('store_id', '>', 0)
+                        ->whereHas('categories', function ($query) use ($categoryIds): void {
+                            $query->whereIn(DB::raw('ec_product_category_product.category_id'), $categoryIds);
+                        })
+                        ->with(['store' => function ($query): void {
+                            $query->select(['id', 'name', 'address', 'city', 'state', 'ward']);
+                        }])
+                        ->get()
+                        ->pluck('store')
+                        ->filter()
+                        ->unique('id')
+                        ->values();
+
+                    $validStoreIds = $storeOptions->pluck('id')->all();
+                    $hasValidStore = $selectedStoreId && in_array($selectedStoreId, $validStoreIds, true);
+
+                    if ($hasValidStore) {
+                        $request->merge(['stores' => [$selectedStoreId]]);
+                    } elseif ($storeOptions->count() === 1) {
+                        $selectedStoreId = $storeOptions->first()->id;
+                        $request->merge(['stores' => [$selectedStoreId]]);
+                    } elseif ($storeOptions->count() > 1) {
+                        $request->merge(['stores' => [-1]]);
+                        $shouldShowStoreModal = true;
+                    }
+                }
+
                 $products = app(GetProductService::class)->getProduct($request, null, null, $with);
 
                 $request->merge([
@@ -250,7 +286,7 @@ class HandleFrontPages
                 return [
                     'view' => 'ecommerce.product-category',
                     'default_view' => 'plugins/ecommerce::themes.product-category',
-                    'data' => compact('category', 'products'),
+                    'data' => compact('category', 'products', 'storeOptions', 'selectedStoreId', 'shouldShowStoreModal'),
                     'slug' => $category->slug,
                 ];
 

@@ -38,6 +38,7 @@ class GetProductService
             'collections' => (array) $request->input('collections', []),
             'collection' => $request->input('collection'),
             'attributes' => (array) $request->input('attributes', []),
+            'stores' => array_filter([(int) $request->input('store')]),
             'max_price' => $request->input('max_price'),
             'min_price' => $request->input('min_price'),
             'price_ranges' => (array) $request->input('price_ranges', []),
@@ -141,6 +142,7 @@ class GetProductService
             'collection' => $queryVar['collection'],
             'brands' => $queryVar['brands'],
             'attributes' => $queryVar['attributes'],
+            'stores' => $queryVar['stores'],
             'order_by' => $orderBy,
         ], $params);
 

@@ -1,12 +1,8 @@
 @php
-    $orders = $order;
+    $orders = $ordersCollection ?? $order;
 
-    if ($order instanceof \Illuminate\Support\Collection) {
-        $order = $order->where('is_finished', true)->first();
-
-        if (! $order) {
-            $order = $order->first();
-        }
+    if ($orders instanceof \Illuminate\Support\Collection) {
+        $order = $orders->where('is_finished', true)->first() ?: $orders->first();
     }
 
     $userInfo = $order->address->id ? $order->address : $order->user;
@@ -95,7 +91,7 @@
         @endif
     @endif
 
-    {!! apply_filters('ecommerce_thank_you_customer_info', null, $order) !!}
+    {!! apply_filters('ecommerce_thank_you_customer_info', null, $orders) !!}
 </div>
 
 @if ($tax = $order->taxInformation)

@@ -31,7 +31,6 @@ use Botble\Ecommerce\Models\OrderAddress;
 use Botble\Ecommerce\Models\OrderHistory;
 use Botble\Ecommerce\Models\OrderProduct;
 use Botble\Ecommerce\Models\Product;
-use Botble\Ecommerce\Models\Review;
 use Botble\Ecommerce\Models\Shipment;
 use Botble\Ecommerce\Services\HandleApplyCouponService;
 use Botble\Ecommerce\Services\HandleApplyPromotionsService;
@@ -46,22 +45,17 @@ use Botble\Payment\Supports\PaymentHelper;
 use Botble\Theme\Facades\Theme;
 use Exception;
 use Illuminate\Auth\Events\Registered;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Throwable;
-use Illuminate\Support\Facades\DB;
-use Botble\Marketplace\Models\Store;
-use Botble\Location\Models\State;
-use Botble\Location\Models\City;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -152,7 +146,7 @@ class PublicCheckoutController extends BaseController
             $sessionCheckoutData['ward_id'] = $sessionCheckoutData['ward_id']->ward_id ?? '';
         }
         /**
-         * @var Collection $products
+         * @var \Illuminate\Database\Eloquent\Collection $products
          */
         $products = Cart::instance('cart')->products();
         if ($products->isEmpty()) {
@@ -262,29 +256,22 @@ class PublicCheckoutController extends BaseController
             session(['checkout_data' => $sessionCheckoutData]);
         }
 
-        $selectedState = old('address.state', Arr::get($sessionCheckoutData, 'state', ''));
-        $selectedCity = old('address.city', Arr::get($sessionCheckoutData, 'city', ''));
-        $selectedWard = old('address.ward', Arr::get($sessionCheckoutData, 'ward', ''));
+        $storesForDisplay = collect();
+        if ($products instanceof \Illuminate\Database\Eloquent\Collection) {
+            $products->loadMissing('store');
 
-        $productPairs = [];
-        foreach ($data['products'] as $product) {
-            $productPairs[] = $product->store_id . '-' . $product->name;
+            $storesForDisplay = $products
+                ->map(function ($product) {
+                    return [
+                        'id' => $product->store_id,
+                        'name' => $product->store->name ?? null,
+                        'address' => $product->store->full_address ?? $product->store->address ?? null,
+                    ];
+                })
+                ->filter(fn ($store) => $store['id'])
+                ->unique('id')
+                ->values();
         }
-
-        $productsOrder = implode(', ', $productPairs);
-
-        $stores = $this->getStoresByLocation($selectedState, $selectedCity, $selectedWard, $productsOrder);
-
-        // dd($stores);
-
-        $selectedStoreId = session('store_id');
-        $selectedStore = $selectedStoreId ? $stores->firstWhere('id', $selectedStoreId) : null;
-
-        $data = array_merge($data, [
-            'stores' => $stores,
-            'selected_store' => $selectedStore ? $selectedStore->id : null,
-        ]);
-
 
         // @phpstan-ignore-next-line
         $discountsQuery = DiscountModel::query()
@@ -299,7 +286,13 @@ class PublicCheckoutController extends BaseController
         $orderAmount = max($rawTotal - $promotionDiscountAmount - $couponDiscountAmount, 0);
         $orderAmount += (float) $shippingAmount;
 
-        $data = [...$data, 'discounts' => $discounts, 'rawTotal' => $rawTotal, 'orderAmount' => $orderAmount];
+        $data = [
+            ...$data,
+            'discounts' => $discounts,
+            'rawTotal' => $rawTotal,
+            'orderAmount' => $orderAmount,
+            'storesForDisplay' => $storesForDisplay,
+        ];
 
         app(GoogleTagManager::class)->beginCheckout($products->all(), $orderAmount);
         app(FacebookPixel::class)->checkout($products->all(), $orderAmount);
@@ -726,54 +719,7 @@ class PublicCheckoutController extends BaseController
                 'address.address_detail.required' => trans('core/base::layouts.pls-enter-address-detail'),
             ]);
         }
-        session([
-            'store_id' => $request->input('store_id'),
-        ]);
-
-        //duong
-        // $store_id_lelect = $request->input('store_id') ?? null;
-        // $storeSelect = Store::where('id', $request->input('store_id'))->first();
-        // $proInStoreSelect = $storeSelect->products;
-
-        // $cart = Cart::instance('cart');
-        // $cartItems = $cart->content();
-
-        // Gom số lượng theo tên sản phẩm
-        // $groupedItems = [];
-
-        // foreach ($cartItems as $item) {
-        //     $name = $item->name;
-
-        //     if (!isset($groupedItems[$name])) {
-        //         $groupedItems[$name] = [
-        //             'qty'     => $item->qty,
-        //             'options' => $item->options->toArray(),
-        //         ];
-        //     } else {
-        //         $groupedItems[$name]['qty'] += $item->qty;
-        //     }
-        // }
-
-        // // Xoá toàn bộ giỏ hàng
-        // Cart::instance('cart')->destroy();
-
-        // // Thêm lại sản phẩm theo store mới
-        // foreach ($groupedItems as $name => $data) {
-        //     $matchedProduct = $proInStoreSelect->firstWhere('name', $name);
-
-        //     if ($matchedProduct) {
-        //         Cart::instance('cart')->add([
-        //             'id'      => $matchedProduct->id,
-        //             'name'    => $matchedProduct->name,
-        //             'qty'     => $data['qty'],
-        //             'price'   => $matchedProduct->final_price ?? $matchedProduct->price,
-        //             'weight'  => $matchedProduct->weight ?? 0,
-        //             'options' => $data['options'],
-        //         ]);
-        //     }
-        // }
-        // dd(Cart::instance('cart'));
-        //duong
+        session()->forget('store_id');
 
         if (Cart::instance('cart')->isEmpty()) {
             return $this
@@ -1349,60 +1295,23 @@ class PublicCheckoutController extends BaseController
         //     // dd($shipments_update);
 
         // }
-        // dd(session('store_id'));
-        $order_update = Order::query()->where('token', $token)->get();
-        $storeId = session('store_id');
-
-        if ($storeId !== null) {
-            if ($storeId === 'none') {
-                $storeSelect = null;
-            } else {
-                $storeSelect = Store::find($storeId);
-            }
-
-            if ($storeSelect !== null || $storeId === 'none') {
-                // Trả lại số lượng cũ trước khi gộp
-                foreach ($order_update as $orderUpdate) {
-                    foreach ($orderUpdate->products as $orderProduct) {
-                        if ($orderProduct->product_id) {
-                            $product = $orderProduct->product;
-                            if ($product) {
-                                $product->quantity += $orderProduct->qty;
-                                $product->save();
-                            }
-                        }
-                    }
-                }
-
-                // Nếu store_id là 'none', lấy các sản phẩm có store_id = 0
-                if ($storeId === 'none') {
-                    $storeProductMap = Product::where('store_id', 0)
-                        ->get()
-                        ->keyBy(fn($p) => mb_strtolower(trim($p->name)));
-                } else {
-                    $storeProductMap = $storeSelect->products
-                        ->keyBy(fn($p) => mb_strtolower(trim($p->name)));
-                }
-
-                $this->mergeOrdersByStoreProductName($order_update, $storeSelect, $storeProductMap);
-
-                $this->deductProductQuantityFromOrderToken($token);
-            }
-        }
-
         /**
          * @var Order $order
          */
 
 
-        $order = Order::query()
+        $orders = Order::query()
             ->where('token', $token)
             ->with(['address', 'products', 'taxInformation'])
             ->latest('id')
-            ->firstOrFail();
+            ->get();
 
+        abort_if($orders->isEmpty(), 404);
 
-        // dd($order->payment);
+        $order = $orders
+            ->where('is_finished', true)
+            ->first() ?? $orders->first();
+
         // $newNotification = new CustomerNotification();
         $order->refresh();
         $orderAmount = (float) $order->amount;
@@ -1460,132 +1369,13 @@ class PublicCheckoutController extends BaseController
 
         OrderHelper::clearSessions($token);
 
-        return view('plugins/ecommerce::orders.thank-you', compact('order', 'products'));
+        return view('plugins/ecommerce::orders.thank-you', [
+            'order' => $order,
+            'orders' => $orders,
+            'products' => $products,
+        ]);
     }
 
-    public function mergeOrdersByStoreProductName(Collection $orders, ?Store $storeSelect, Collection $storeProductMap): void
-    {
-        if ($orders->isEmpty()) {
-            return;
-        }
-
-        DB::beginTransaction();
-
-        try {
-            $mainOrder = $orders->first();
-            $otherOrders = $orders->slice(1);
-
-            $shipmentTotalFee = 0;
-            $paymentTotalAmount = 0;
-            $totalAmountToAdd = 0;
-            $totalSubTotalToAdd = 0;
-            $totalWeightToAdd = 0;
-
-            foreach ($otherOrders as $order) {
-                foreach ($order->products as $product) {
-                    $productNameNormalized = mb_strtolower(trim($product->product_name));
-                    if (isset($storeProductMap[$productNameNormalized])) {
-                        $storeProduct = $storeProductMap[$productNameNormalized];
-
-                        $product->order_id = $mainOrder->id;
-                        $product->product_id = $storeProduct->id;
-                        $product->product_name = $storeProduct->name;
-                        $product->save();
-
-                        $totalWeightToAdd += (float) $product->weight * $product->qty;
-                    }
-                }
-
-                $totalAmountToAdd += (float) $order->amount;
-                $totalSubTotalToAdd += (float) $order->sub_total;
-
-                if ($order->shipment) {
-                    $shipmentTotalFee += (float) $order->shipment->shipping_fee_store;
-
-                    $order->shipment->weight = max(0, (float) $order->shipment->weight - $totalWeightToAdd);
-                    $order->shipment->order_id = $mainOrder->id;
-                    $order->shipment->store_id = $storeSelect?->id; // null nếu không có store
-                    $order->shipment->save();
-
-                    if ($order->shipment->id !== $mainOrder->shipment?->id) {
-                        $order->shipment->delete();
-                    }
-                }
-
-                if ($order->payment) {
-                    $paymentTotalAmount += (float) $order->payment->amount;
-                    $order->payment->order_id = $mainOrder->id;
-                    $order->payment->save();
-                }
-
-                if (OrderProduct::where('order_id', $order->id)->count() === 0) {
-                    $order->delete();
-                }
-            }
-
-            if ($otherOrders->isNotEmpty()) {
-                if ($mainOrder->shipment) {
-                    $mainOrder->shipment->shipping_fee_store += $shipmentTotalFee;
-                    $mainOrder->shipment->weight += $totalWeightToAdd;
-                    $mainOrder->shipment->store_id = $storeSelect?->id;
-                    $mainOrder->shipment->save();
-                }
-
-                if ($mainOrder->payment) {
-                    $mainOrder->payment->amount += $paymentTotalAmount;
-                    $mainOrder->payment->save();
-                }
-
-                $mainOrder->amount += $totalAmountToAdd;
-                $mainOrder->sub_total += $totalSubTotalToAdd;
-            }
-
-            $mainOrder->store_id = $storeSelect?->id;
-            $mainOrder->save();
-
-            $this->updateOrderProductsToMatchStore($mainOrder, $storeProductMap);
-
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
-    }
-
-    public function updateOrderProductsToMatchStore(Order $order, Collection $storeProductMap): void
-    {
-        $mergedProducts = OrderProduct::where('order_id', $order->id)->get();
-        $grouped = $mergedProducts->groupBy(fn($item) => mb_strtolower(trim($item->product_name)));
-
-        // dd($mergedProducts);
-        foreach ($grouped as $productName => $group) {
-            $first = $group->first();
-            // dd($grouped);
-            $storeProduct = $storeProductMap[$productName] ?? null;
-            // dd($storeProduct);
-
-            if (!$storeProduct) {
-                continue;
-            }
-
-            if ($group->count() > 1) {
-                $totalQty = $group->sum('qty');
-
-                $first->update([
-                    'qty' => $totalQty,
-                    'product_id' => $storeProduct->id,
-                    'product_name' => $storeProduct->name,
-                ]);
-                // dd($group->slice(1));
-                $group->slice(1)->each->delete();
-            } else {
-                $first->update([
-                    'product_id' => $storeProduct->id,
-                    'product_name' => $storeProduct->name,
-                ]);
-            }
-        }
-    }
 
     public function deductProductQuantityFromOrderToken(string $token)
     {
@@ -1764,237 +1554,5 @@ class PublicCheckoutController extends BaseController
     protected function createOrderFromData(array $data, ?Order $order): Order|null|false
     {
         return OrderHelper::createOrUpdateIncompleteOrder($data, $order);
-    }
-
-    public function updateWardName($wardCode)
-    {
-        // Tách wardCode nếu có định dạng "180329.Xã Trù Hựu"
-        if (strpos($wardCode, '.') !== false) {
-            [$wardCode,] = explode('.', $wardCode);
-        }
-
-        // Tìm cửa hàng đầu tiên có ward phù hợp để lấy city (district_id)
-        $store = Store::where('ward', 'like', $wardCode . '%')->first();
-
-        if (!$store) {
-
-            return null;
-        }
-
-        $wardName = $this->getWardNameFromGHN($wardCode, $store->city);
-
-        if ($wardName) {
-            // Cập nhật ward_name trong cơ sở dữ liệu nếu cần
-            Store::where('ward', 'like', $wardCode . '%')->update(['ward_name' => $wardName]);
-            return $wardName;
-        }
-
-        \Log::warning("Không lấy được ward_name từ GHN cho wardCode: {$wardCode}, district: {$store->city}");
-        return null;
-    }
-
-    // protected function getStoresByLocation(?string $selectedState, ?string $selectedCity, ?string $selectedWard, ?string $productsOrder): Collection
-    // {
-    //     $productFilters = $this->parseProductsOrder($productsOrder);
-
-    //     $query = Store::query()
-    //         ->where('mp_stores.status', 'published')
-    //         ->leftJoin('states', 'mp_stores.state', '=', 'states.id')
-    //         ->leftJoin('cities', 'mp_stores.city', '=', 'cities.id')
-    //         ->select([
-    //             'mp_stores.id',
-    //             'mp_stores.name',
-    //             'mp_stores.address',
-    //             'mp_stores.city',
-    //             'mp_stores.state',
-    //             'mp_stores.ward',
-    //             'mp_stores.phone',
-    //             'mp_stores.email',
-    //             'states.name as state_name',
-    //             'cities.name as city_name',
-    //             \DB::raw('
-    //             CASE 
-    //                 WHEN mp_stores.state = ? AND mp_stores.city = ? AND mp_stores.ward = ? THEN 0
-    //                 WHEN mp_stores.state = ? AND mp_stores.city = ? THEN 1
-    //                 WHEN mp_stores.city = ? THEN 2
-    //                 WHEN mp_stores.state = ? THEN 3
-    //                 ELSE 4
-    //             END AS priority
-    //         ')
-    //         ])
-    //         ->addBinding([
-    //             $selectedState ?: 0,
-    //             $selectedCity ?: 0,
-    //             $selectedWard ?: 0,
-    //             $selectedState ?: 0,
-    //             $selectedCity ?: 0,
-    //             $selectedCity ?: 0,
-    //             $selectedState ?: 0
-    //         ], 'select');
-
-    //     // Lọc địa lý ít nhất phải cùng tỉnh
-    //     if ($selectedState) {
-    //         $query->where('mp_stores.state', $selectedState);
-    //     }
-
-    //     // Lọc sản phẩm: chỉ lấy những cửa hàng có đủ tất cả tên sản phẩm
-    //     if (!empty($productFilters)) {
-    //         $query->whereExists(function ($sub) use ($productFilters) {
-    //             $sub->selectRaw('1')
-    //                 ->from('ec_products')
-    //                 ->whereColumn('ec_products.store_id', 'mp_stores.id')
-    //                 ->whereIn('ec_products.name', $productFilters)
-    //                 ->groupBy('ec_products.store_id')
-    //                 ->havingRaw('COUNT(DISTINCT ec_products.name) >= ?', [count($productFilters)]);
-    //         });
-    //     }
-
-    //     $stores = $query->orderBy('priority', 'asc')
-    //         ->orderBy('mp_stores.name', 'asc')
-    //         ->get()
-    //         ->map(function ($store) {
-    //             $wardCode = $store->ward;
-    //             $wardName = $this->getWardNameFromGHN($wardCode, $store->city);
-    //             $store->ward = $wardName ?: $wardCode;
-    //             $store->address = trim($store->address . ', ' . $store->ward . ', ' . $store->city_name . ', ' . $store->state_name);
-    //             return $store;
-    //         });
-
-    //     return $stores;
-    // }
-    protected function getStoresByLocation(?string $selectedState, ?string $selectedCity, ?string $selectedWard, ?string $productsOrder): Collection
-    {
-        $productFilters = $this->parseProductsOrder($productsOrder);
-
-        $baseQuery = Store::query()
-            ->where('mp_stores.status', 'published')
-            ->leftJoin('states', 'mp_stores.state', '=', 'states.id')
-            ->leftJoin('cities', 'mp_stores.city', '=', 'cities.id')
-            ->select([
-                'mp_stores.id',
-                'mp_stores.name',
-                'mp_stores.address',
-                'mp_stores.city',
-                'mp_stores.state',
-                'mp_stores.ward',
-                'mp_stores.phone',
-                'mp_stores.email',
-                'mp_stores.logo',
-                'mp_stores.logo_square',
-                'states.name as state_name',
-                'cities.name as city_name',
-                \DB::raw('
-                CASE 
-                    WHEN mp_stores.state = ? AND mp_stores.city = ? AND mp_stores.ward = ? THEN 0
-                    WHEN mp_stores.state = ? AND mp_stores.city = ? THEN 1
-                    WHEN mp_stores.city = ? THEN 2
-                    WHEN mp_stores.state = ? THEN 3
-                    ELSE 4
-                END AS priority
-            ')
-            ])
-            ->addBinding([
-                $selectedState ?: 0,
-                $selectedCity ?: 0,
-                $selectedWard ?: 0,
-                $selectedState ?: 0,
-                $selectedCity ?: 0,
-                $selectedCity ?: 0,
-                $selectedState ?: 0
-            ], 'select');
-
-        $buildStores = function ($query) {
-            return $query->orderBy('priority', 'asc')
-                ->orderBy('mp_stores.name', 'asc')
-                ->get()
-                ->map(function ($store) {
-                    $wardCode = $store->ward;
-                    $wardName = $this->getWardNameFromGHN($wardCode, $store->city);
-                    $store->ward = $wardName ?: $wardCode;
-                    $store->address = trim($store->address . ', ' . $store->ward . ', ' . $store->city_name . ', ' . $store->state_name);
-
-                    $productIds = Product::where('store_id', $store->id)->pluck('id');
-
-                    $avgStar = Review::whereIn('product_id', $productIds)->avg('star') ?? 0;
-                    $store->avg_star = round((float) $avgStar, 1);
-
-                    $store->review_count = Review::whereIn('product_id', $productIds)->count();
-
-                    return $store;
-                });
-        };
-
-        $query = clone $baseQuery;
-
-        if ($selectedState) {
-            $query->where('mp_stores.state', $selectedState);
-        }
-
-        if (!empty($productFilters)) {
-            $query->whereExists(function ($sub) use ($productFilters) {
-                $sub->selectRaw('1')
-                    ->from('ec_products')
-                    ->whereColumn('ec_products.store_id', 'mp_stores.id')
-                    ->whereIn('ec_products.name', $productFilters)
-                    ->groupBy('ec_products.store_id')
-                    ->havingRaw('COUNT(DISTINCT ec_products.name) >= ?', [count($productFilters)]);
-            });
-        }
-
-        $stores = $buildStores($query);
-
-        if ($stores->isEmpty()) {
-            $fallbackQuery = clone $baseQuery;
-            $stores = $buildStores($fallbackQuery);
-        }
-
-        return $stores;
-    }
-
-    public function getStoresNearYou(Request $request): JsonResponse
-    {
-        try {
-            // dd($request->all());
-            $selectedState = $request->input('state');
-            $selectedCity = $request->input('city');
-            $selectedWard = $request->input('ward');
-            $productsOrder = $request->input('product_names');
-
-            // dd($productsOrder);
-
-            \Log::info('getStoresNearYou Request: ' . json_encode($request->all()));
-            \Log::info('getStoresNearYou Selected State: ' . ($selectedState ?: 'null'));
-            \Log::info('getStoresNearYou Selected City: ' . ($selectedCity ?: 'null'));
-            \Log::info('getStoresNearYou Selected Ward: ' . ($selectedWard ?: 'null'));
-
-            $stores = $this->getStoresByLocation($selectedState, $selectedCity, $selectedWard, $productsOrder);
-
-            return response()->json(['data' => $stores->values()], 200);
-        } catch (\Exception $e) {
-            \Log::error('getStoresNearYou Error: ' . $e->getMessage() . "\nTrace: " . $e->getTraceAsString());
-            return response()->json(['error' => 'Internal Server Error', 'message' => $e->getMessage()], 500);
-        }
-    }
-
-    //duong
-    protected function parseProductsOrder(?string $productsOrder): array
-    {
-        if (!$productsOrder) {
-            return [];
-        }
-
-        // Format: "29-Tẩy đa năng, 28-Tẩy đa năng"
-        $products = array_map('trim', explode(',', $productsOrder));
-
-        // Tách lấy tên sản phẩm (sau dấu '-')
-        $productNames = [];
-        foreach ($products as $item) {
-            $parts = explode('-', $item, 2);
-            if (isset($parts[1])) {
-                $productNames[] = trim($parts[1]);
-            }
-        }
-
-        return array_unique($productNames);
     }
 }

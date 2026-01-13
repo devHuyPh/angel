@@ -1182,32 +1182,44 @@ class OrderHelper
                 $orders = $collection;
             }
 
-            $orders = $orders->filter(function ($item) {
-                return $item->payment->payment_channel == PaymentMethodEnum::BANK_TRANSFER &&
+            $paymentOrders = $orders->filter(function ($item) {
+                return $item->payment &&
+                    $item->payment->payment_channel == PaymentMethodEnum::BANK_TRANSFER &&
                     $item->payment->status == PaymentStatusEnum::PENDING;
             });
 
-            if ($orders->isEmpty()) {
+            if ($paymentOrders->isEmpty()) {
                 return null;
             }
 
-            $bankInfo = get_payment_setting('description', $orders->first()->payment->payment_channel);
+            $bankInfo = get_payment_setting('description', $paymentOrders->first()->payment->payment_channel);
 
             $orderAmount = 0;
-            $orderCode = '';
+            $orderCodeParts = [];
+            $usedWalletRemaining = [];
 
             if ($bankInfo) {
                 foreach ($orders as $item) {
-                    $paymentMeta = $item->payment->metadata ?? [];
-                    $remaining = (float) ($paymentMeta['wallet_remaining'] ?? ($paymentMeta['remaining_amount'] ?? 0));
-                    $payAmount = $remaining > 0 ? $remaining : $item->amount;
+                    $paymentMeta = $item->payment?->metadata ?? [];
+                    $chargeKey = $item->payment?->charge_id ?: $item->payment_id;
+                    $walletRemaining = Arr::get($paymentMeta, 'wallet_remaining', Arr::get($paymentMeta, 'remaining_amount'));
+                    $allocationRemaining = Arr::get($paymentMeta, "wallet_payment.allocations.{$item->id}.remaining");
+
+                    if ($walletRemaining !== null && $chargeKey && ! isset($usedWalletRemaining[$chargeKey])) {
+                        $payAmount = (float) $walletRemaining;
+                        $usedWalletRemaining[$chargeKey] = true;
+                    } elseif ($allocationRemaining !== null) {
+                        $payAmount = (float) $allocationRemaining;
+                    } else {
+                        $payAmount = (float) $item->amount;
+                    }
 
                     $orderAmount += $payAmount;
-                    $orderCode .= $item->code . ', ';
+                    $orderCodeParts[] = $item->code;
                 }
-
-                $orderCode = rtrim(trim($orderCode), ',');
             }
+
+            $orderCode = implode(', ', $orderCodeParts);
 
             $bankInfo = view(
                 'plugins/ecommerce::orders.partials.bank-transfer-info',

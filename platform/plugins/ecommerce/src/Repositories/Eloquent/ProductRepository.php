@@ -333,6 +333,7 @@ class ProductRepository extends RepositoriesAbstract implements ProductInterface
             'attributes' => [],
             'collections' => [],
             'collection' => null,
+            'stores' => [],
         ], $filters);
 
         $isUsingDefaultCurrency = get_application_currency_id() == cms_currency()->getDefaultCurrency()->getKey();
@@ -604,6 +605,12 @@ class ProductRepository extends RepositoriesAbstract implements ProductInterface
                     return $query
                         ->whereIn('ec_product_category_product.category_id', $filters['categories']);
                 });
+        }
+
+        // Filter product by store
+        $filters['stores'] = array_filter($filters['stores']);
+        if ($filters['stores']) {
+            $this->model = $this->model->whereIn('store_id', $filters['stores']);
         }
 
         // Filter product by tags

@@ -18,7 +18,7 @@
                 </div>
             </div>
 
-            @include('plugins/ecommerce::orders.thank-you.customer-info', compact('order'))
+            @include('plugins/ecommerce::orders.thank-you.customer-info', ['order' => $order, 'ordersCollection' => $orders])
 
             <a class="btn payment-checkout-btn" href="{{ BaseHelper::getHomepageUrl() }}">
                 {{ __('Continue shopping') }}

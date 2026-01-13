@@ -376,132 +376,49 @@
             </div>
         </div>
     @endif
-    <!-- Sau phần address_ward -->
-    <div class="form-group mb-3 mt-3 @error('selected_store') has-error @enderror">
-        <div class="select--arrow form-input-wrapper">
-            <select class="form-control select2" id="selected_store" name="store_id"
-                data-placeholder="{{ __('From Company') }}" required>
-                @foreach ($stores as $store)
-                    <option value="{{ $store->id }}" data-storeid="{{ $store->id }}"
-                        @if ($selected_store == $store->id) selected @endif>
-                        {{ $store->name }} - {{ $store->full_address }}
-                    </option>
-                @endforeach
-                <option value="none">{{ __('From Company') }}</option>
-            </select>
-            <label style="z-index: 999;" for="selected_store">{{ __('Cửa hàng gần bạn') }}</label>
-            <div class="store-near-you-loading" style="display: none;">
-                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                {{ __('Đang tải...') }}
-            </div>
-        </div>
-        {!! Form::error('selected_store', $errors) !!}
-    </div>
 
     {!! apply_filters('ecommerce_checkout_address_form_after', null, $sessionCheckoutData) !!}
 
-    @php
-        $productPairs = [];
-        foreach ($products as $product) {
-            $productPairs[] = $product->store_id . '-' . $product->name;
-        }
-    @endphp
-
-    <input hidden type="text" id="products-order" name="products-order"
-        value="{{ implode(', ', $productPairs) }}">
-
-    <textarea hidden name="" id="list-store-render" cols="30" rows="10"></textarea>
+    @if (!empty($storesForDisplay) && $storesForDisplay->count())
+        <div class="form-group mt-3">
+            <h6 class="mb-2">{{ __('Cửa hàng xử lý đơn') }}</h6>
+            <ul class="list-unstyled mb-0">
+                @foreach ($storesForDisplay as $store)
+                    <li class="mb-2">
+                        <strong>{{ $store['name'] ?? __('Cửa hàng') }}</strong>
+                        @if (!empty($store['address']))
+                            <div class="text-muted small">{{ $store['address'] }}</div>
+                        @endif
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
 </div>
+
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const stateSelect = document.getElementById("address_state");
-        const citySelect = document.getElementById("address_city");
-        const wardSelect = document.getElementById("address_ward");
-        const storeSelect = document.getElementById("selected_store");
-        const loadingSpinner = document.querySelector(".store-near-you-loading");
+    document.addEventListener('DOMContentLoaded', function () {
+        const stateSelect = document.getElementById('address_state');
+        const citySelect = document.getElementById('address_city');
+        const wardSelect = document.getElementById('address_ward');
         const selectedWard = "{{ old('address.ward', Arr::get($sessionCheckoutData, 'ward') ?? '') }}";
         const selectedCity = "{{ old('address.city', Arr::get($sessionCheckoutData, 'city') ?? '') }}";
         const selectedState = "{{ old('address.state', Arr::get($sessionCheckoutData, 'state') ?? '') }}";
-        
-        let productStoreId = null;
-        let hasMultipleStores = false;
-        let isApplyingAddressSelection = false;
-        let isAutoSelectingStore = false;
-
-        // Khởi tạo productStoreId và kiểm tra nhiều cửa hàng
-        function initializeProductStoreId() {
-            const storeSpans = document.querySelectorAll('span[data-storeid]');
-            if (storeSpans.length) {
-                const spanStoreIds = Array.from(storeSpans)
-                    .map(span => parseInt(span.getAttribute('data-storeid')))
-                    .filter(id => !isNaN(id) && id !== 0); // Loại bỏ storeId = 0
-                const uniqueStoreIds = [...new Set(spanStoreIds)];
-                if (uniqueStoreIds.length === 1) {
-                    productStoreId = null; // Chỉ có một cửa hàng liên kết
-                    hasMultipleStores = true;
-                } else if (uniqueStoreIds.length > 1) {
-                    productStoreId = null; // Nhiều cửa hàng, cho phép chọn
-                    hasMultipleStores = true;
-                }
-            }
-            console.log("Product Store ID:", productStoreId, "Has Multiple Stores:", hasMultipleStores);
-        }
-
-        // API GHN cho phường/xã
         const apiUrl = "https://online-gateway.ghn.vn/shiip/public-api/master-data/ward";
         const token = "2c2e62dc-ee72-11ef-a3aa-e2c95c1f5bee";
+        let isApplyingAddressSelection = false;
 
-        // Lưu city vào localStorage
-        if (citySelect) {
-            localStorage.setItem('to_city', citySelect.value);
-            console.log(`city ${citySelect.value}`);
-        }
+        const updateFullAddress = () => {
+            const addressDetail = $("#address_address_detail").val()?.trim() || "";
+            const addressWard = $("#address_ward option:selected").text()?.trim() || "";
+            const addressCity = $("#address_city option:selected").text()?.trim() || "";
+            const addressState = $("#address_state option:selected").text()?.trim() || "";
+            const fullAddress = [addressDetail, addressWard, addressCity, addressState].filter(Boolean).join(", ");
+            $("#address_address").val(fullAddress);
+        };
 
-        document.getElementById("address_id")?.addEventListener("change", function() {
-            console.log('address_id changed');
-
-            const selectedOption = this.options[this.selectedIndex];
-            const dataCode = selectedOption.getAttribute("data-code");
-
-            sessionStorage.removeItem('selected_store');
-            sessionStorage.removeItem('selected_store_manual');
-
-            if (!dataCode) {
-                fetchStores(true);
-                return;
-            }
-
-            const [stateVal, cityVal, wardVal] = dataCode.split(',').map(item => item.trim());
-
-            isApplyingAddressSelection = true;
-
-            if (stateSelect) {
-                $(stateSelect).val(stateVal || "").trigger('change.select2');
-            }
-
-            fetchCities(stateVal, cityVal)
-                .then(() => fetchWards(cityVal, wardVal))
-                .then(() => {
-                    updateFullAddress();
-                    if (cityVal) {
-                        localStorage.setItem('to_city', cityVal);
-                    }
-
-                    if (wardVal) {
-                        localStorage.setItem('to_wc', wardVal.split('.')[0]);
-                        $(document).trigger('calculateShippingFee');
-                    } else {
-                        localStorage.removeItem('to_wc');
-                    }
-                    fetchStores(true);
-                })
-                .then(() => {
-                    isApplyingAddressSelection = false;
-                });
-        });
-
-        function fetchCities(stateId, selectedCityId) {
+        const fetchCities = (stateId, cityIdToSelect) => {
             if (!citySelect) {
                 return Promise.resolve();
             }
@@ -523,17 +440,10 @@
                 $.ajax({
                     url: url,
                     method: "GET",
-                    data: {
-                        state_id: stateId,
-                        country_id: countryId || null,
-                    },
-                    headers: {
-                        "Accept": "application/json",
-                    },
+                    data: { state_id: stateId, country_id: countryId || null },
+                    headers: { "Accept": "application/json" },
                     success: function(response) {
-                        const list = Array.isArray(response?.data) ?
-                            response.data :
-                            Array.isArray(response?.data?.data) ? response.data.data : [];
+                        const list = Array.isArray(response?.data) ? response.data : Array.isArray(response?.data?.data) ? response.data.data : [];
                         const placeholder = citySelect.options[0]?.text || "";
                         let options = `<option value="">${placeholder}</option>`;
                         list.forEach((city) => {
@@ -543,8 +453,8 @@
                             options += `<option value="${city.id}">${city.name}</option>`;
                         });
                         $(citySelect).html(options).trigger('change.select2');
-                        if (selectedCityId) {
-                            $(citySelect).val(selectedCityId).trigger('change.select2');
+                        if (cityIdToSelect) {
+                            $(citySelect).val(cityIdToSelect).trigger('change.select2');
                         }
                         resolve();
                     },
@@ -555,15 +465,14 @@
                     }
                 });
             });
-        }
+        };
 
-        function fetchWards(districtId, selectedWardCode = "") {
+        const fetchWards = (districtId, wardCode = "") => {
+            if (!wardSelect) {
+                return Promise.resolve();
+            }
+
             return new Promise((resolve) => {
-                if (!wardSelect) {
-                    resolve();
-                    return;
-                }
-
                 const placeholder = wardSelect.options[0]?.text || "Select ward...";
                 if (!districtId) {
                     $(wardSelect).html(`<option value="">${placeholder}</option>`).trigger("change.select2");
@@ -571,297 +480,111 @@
                     return;
                 }
 
-                const wardCode = selectedWardCode ? String(selectedWardCode).split('.')[0] : "";
+                const codeToMatch = wardCode ? String(wardCode).split('.')[0] : "";
 
                 fetch(`${apiUrl}?district_id=${districtId}`, {
-                        method: "GET",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Token": token
-                        }
-                    })
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Token": token
+                    }
+                })
                     .then(response => response.json())
                     .then(data => {
                         let options = `<option value="">${placeholder}</option>`;
                         if (data.code === 200 && Array.isArray(data.data)) {
                             data.data.forEach(ward => {
                                 const value = `${ward.WardCode}.${ward.WardName}`;
-                                const isSelected = value === selectedWard ||
-                                    (wardCode && String(ward.WardCode) === wardCode);
-                                options +=
-                                    `<option value="${value}" ${isSelected ? "selected" : ""}>${ward.WardName}</option>`;
+                                const isSelected = value === selectedWard || (codeToMatch && String(ward.WardCode) === codeToMatch);
+                                options += `<option value="${value}" ${isSelected ? "selected" : ""}>${ward.WardName}</option>`;
                             });
                         } else {
                             options += `<option value="">No wards found...</option>`;
                         }
-                        $(wardSelect).html(options);
-                        $(wardSelect).trigger('change.select2');
+                        $(wardSelect).html(options).trigger('change.select2');
                         resolve();
                     })
                     .catch(error => {
                         console.error("Failed to load wards:", error);
-                        $(wardSelect).html(`<option value="">Load failed...</option>`).trigger(
-                            'change.select2');
+                        $(wardSelect).html(`<option value="">Load failed...</option>`).trigger('change.select2');
                         resolve();
                     });
             });
-        }
-        function fetchStores(resetSelected = false) {
-            if (!storeSelect) return;
-            loadingSpinner.style.display = "block";
+        };
 
-            const productsOrderInput = document.getElementById("products-order");
-            const productNames = productsOrderInput ? productsOrderInput.value : "";
+        document.getElementById('address_id')?.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const dataCode = selectedOption.getAttribute('data-code');
 
-            const requestData = hasMultipleStores ? {
-                state: stateSelect ? stateSelect.value || "" : "",
-                city: citySelect ? citySelect.value || "" : "",
-                ward: wardSelect ? wardSelect.value.split('.')[0] || "" : "",
-                product_names: productNames,
-            } : {
-                state: stateSelect ? stateSelect.value || "" : "",
-                city: citySelect ? citySelect.value || "" : "",
-                ward: wardSelect ? wardSelect.value.split('.')[0] || "" : "",
-                product_names: productNames
-            };
-            console.log("Đang lấy danh sách cửa hàng với:", requestData);
-
-
-            $.ajax({
-                url: "{{ route('public.ajax.checkout.stores-near-you') }}",
-                method: "POST",
-                data: JSON.stringify(requestData),
-                contentType: "application/json",
-                headers: {
-                    "Accept": "application/json",
-                    "X-CSRF-TOKEN": "{{ csrf_token() }}"
-                },
-                success: function(response) {
-                    console.log("Stores response:", response);
-                    const textarea = document.getElementById('list-store-render');
-                    if (textarea) {
-                        textarea.value = JSON.stringify(response, null, 4); // format đẹp
-                    }
-                    let options = '';
-                    const manualSelected = sessionStorage.getItem('selected_store_manual') === '1';
-                    const oldSelectedId = "{{ old('selected_store', $selected_store ?? '') }}";
-                    let defaultSelectedId = '';
-                    if (!resetSelected && manualSelected) {
-                        defaultSelectedId = sessionStorage.getItem('selected_store') || oldSelectedId;
-                    }
-                    let firstStoreId = null;
-                    let foundProductStore = false;
-
-                    if (response.data && Array.isArray(response.data)) {
-                        const storeIds = response.data.map((store) => String(store.id));
-                        defaultSelectedId = defaultSelectedId ? String(defaultSelectedId) : '';
-                        if (defaultSelectedId === 'none' && !manualSelected) {
-                            defaultSelectedId = '';
-                        }
-                        const hasDefaultStore = defaultSelectedId &&
-                            storeIds.includes(defaultSelectedId);
-                        if (!hasDefaultStore && defaultSelectedId !== 'none') {
-                            defaultSelectedId = '';
-                        }
-                        response.data.forEach((store, index) => {
-                            const storeId = String(store.id);
-                            if (index === 0) {
-                                firstStoreId = store.id;
-                            }
-                            if (productStoreId && storeId === String(productStoreId)) {
-                                foundProductStore = true;
-                            }
-                            const isSelected = (productStoreId && storeId ===
-                                    String(productStoreId) && !hasMultipleStores) ||
-                                (!productStoreId && storeId === defaultSelectedId) ?
-                                "selected" : "";
-                            options +=
-                                `<option value="${store.id}" ${isSelected}>${store.name} - ${store.address}</option>`;
-                        });
-
-                        // ✅ Thêm "From Company" sau cùng
-                        options += `<option value="none" ${manualSelected && defaultSelectedId === 'none' ? 'selected' : ''}>{{ __('From Company') }}</option>`;
-                    } else {
-                        options += `<option value="none" selected>{{ __('From Company') }}</option>`;
-                        sessionStorage.setItem('selected_store', 'none');
-                        sessionStorage.setItem('selected_store_manual', '0');
-                    }
-
-                    $(storeSelect).html(options);
-
-                    if (productStoreId && !hasMultipleStores) {
-                        if (foundProductStore) {
-                            isAutoSelectingStore = true;
-                            $(storeSelect).val(productStoreId).trigger('change.select2').prop(
-                                'disabled', true);
-                            isAutoSelectingStore = false;
-                            sessionStorage.setItem('selected_store_manual', '0');
-                            if (document.getElementById('selected_store_display')) {
-                                document.getElementById('selected_store_display').textContent =
-                                    `Cửa hàng: ${storeSelect.selectedOptions[0]?.text || ''}`;
-                            }
-                        } else {
-                            alert(
-                                "Cửa hàng liên kết với sản phẩm không khả dụng tại địa chỉ này. Vui lòng chọn địa chỉ khác hoặc liên hệ hỗ trợ."
-                            );
-                            $(storeSelect).html(
-                                `<option value="${productStoreId}" selected>Cửa hàng không khả dụng</option>`
-                            );
-                            $(storeSelect).prop('disabled', true).trigger('change.select2');
-                            sessionStorage.setItem('selected_store_manual', '0');
-                            if (document.getElementById('selected_store_display')) {
-                                document.getElementById('selected_store_display').textContent =
-                                    `Cửa hàng không khả dụng, vui lòng chọn địa chỉ khác.`;
-                            }
-                        }
-                    } else {
-                        if (!defaultSelectedId && firstStoreId) {
-                            isAutoSelectingStore = true;
-                            $(storeSelect).val(firstStoreId).trigger('change.select2');
-                            isAutoSelectingStore = false;
-                            sessionStorage.setItem('selected_store', firstStoreId);
-                            sessionStorage.setItem('selected_store_manual', '0');
-                        }
-                        $(storeSelect).prop('disabled', false);
-                        if (document.getElementById('selected_store_display')) {
-                            document.getElementById('selected_store_display').textContent =
-                                `Vui lòng chọn một cửa hàng.`;
-                        }
-                    }
-
-                    $(storeSelect).trigger('change.select2');
-                },
-                error: function(xhr, status, error) {
-                    console.error("Lỗi khi tải cửa hàng:", xhr.responseText || error);
-                    $(storeSelect).html(`<option value="">Lỗi tải dữ liệu...</option>`).trigger(
-                        'change.select2');
-                    if (productStoreId && !hasMultipleStores) {
-                        $(storeSelect).html(
-                            `<option value="${productStoreId}" selected>Cửa hàng không khả dụng</option>`
-                        );
-                        $(storeSelect).prop('disabled', true).trigger('change.select2');
-                    }
-                },
-                complete: function() {
-                    loadingSpinner.style.display = "none";
-                }
-            });
-        }
-
-        function updateFullAddress() {
-            const addressDetail = $("#address_address_detail").val()?.trim() || "";
-            const addressWard = $("#address_ward option:selected").text()?.trim() || "";
-            const addressCity = $("#address_city option:selected").text()?.trim() || "";
-            const addressState = $("#address_state option:selected").text()?.trim() || "";
-            const fullAddress = [addressDetail, addressWard, addressCity, addressState].filter(Boolean).join(
-                ", ");
-            $("#address_address").val(fullAddress);
-        }
-
-        function updateStoreSelect() {
-            const storeSelected = document.getElementById('selected_store');
-            const display = document.getElementById('selected_store_display');
-
-            if (!storeSelected) return;
-
-            if (productStoreId && !hasMultipleStores) {
-                const hasOption = Array.from(storeSelected.options).some(opt => String(opt.value) ===
-                    String(productStoreId));
-                if (hasOption) {
-                    $(storeSelected)
-                        .val(productStoreId)
-                        .trigger('change')
-                        .prop('disabled', true)
-                        .trigger('select2:close');
-                    if (display) {
-                        display.textContent = `Cửa hàng: ${storeSelected.selectedOptions[0]?.text || ''}`;
-                    }
-                } else {
-                    $(storeSelected)
-                        .html(`<option value="${productStoreId}" selected>Cửa hàng không khả dụng</option>`)
-                        .prop('disabled', true)
-                        .trigger('change.select2');
-                    if (display) {
-                        display.textContent = `Cửa hàng không khả dụng, vui lòng chọn địa chỉ khác.`;
-                    }
-                }
-            } else {
-                $(storeSelected).prop('disabled', false).trigger('change');
-                if (display) {
-                    display.textContent = `Vui lòng chọn một cửa hàng.`;
-                }
+            if (!dataCode) {
+                fetchWards('');
+                updateFullAddress();
+                return;
             }
-        }
 
-        function waitForStoreOptionsToLoadAndUpdate() {
-            const storeSelect = document.getElementById('selected_store');
-            if (!storeSelect) return;
+            const [stateVal, cityVal, wardVal] = dataCode.split(',').map(item => item.trim());
 
-            const observer = new MutationObserver((mutationsList, observer) => {
-                const hasMoreThanOneOption = storeSelect.options.length > 1;
-                if (hasMoreThanOneOption) {
-                    updateStoreSelect();
-                    observer.disconnect();
-                }
-            });
+            isApplyingAddressSelection = true;
 
-            observer.observe(storeSelect, {
-                childList: true
-            });
-        }
+            if (stateSelect) {
+                $(stateSelect).val(stateVal || '').trigger('change.select2');
+            }
+
+            fetchCities(stateVal, cityVal)
+                .then(() => fetchWards(cityVal, wardVal))
+                .then(() => {
+                    updateFullAddress();
+                    if (cityVal) {
+                        localStorage.setItem('to_city', cityVal);
+                    }
+                    if (wardVal) {
+                        localStorage.setItem('to_wc', wardVal.split('.')[0]);
+                        $(document).trigger('calculateShippingFee');
+                    } else {
+                        localStorage.removeItem('to_wc');
+                    }
+                })
+                .finally(() => {
+                    isApplyingAddressSelection = false;
+                });
+        });
 
         $(document).ready(function() {
-            initializeProductStoreId(); // Khởi tạo productStoreId và hasMultipleStores
+            if (citySelect) {
+                localStorage.setItem('to_city', citySelect.value || '');
+            }
 
             $('#address_state').select2({
-                placeholder: "Chọn tỉnh thành...",
+                placeholder: "Chon tinh thanh...",
                 width: '100%',
                 dropdownParent: $('.customer-address-payment-form')
             });
 
             $('#address_city').select2({
-                placeholder: "Chọn quận huyện...",
+                placeholder: "Chon quan huyen...",
                 width: "100%",
                 dropdownParent: $('.customer-address-payment-form')
             });
 
             $('#address_ward').select2({
-                placeholder: "Chọn phường xã...",
-                width: "100%",
-                dropdownParent: $('.customer-address-payment-form')
-            });
-
-            $('#selected_store').select2({
-                placeholder: "{{ __('From Company') }}",
+                placeholder: "Chon phuong xa...",
                 width: "100%",
                 dropdownParent: $('.customer-address-payment-form')
             });
 
             if (citySelect && citySelect.value) {
-                fetchWards(citySelect.value);
+                fetchWards(citySelect.value, selectedWard);
+            } else if (selectedState) {
+                fetchCities(selectedState, selectedCity).then(() => fetchWards(selectedCity, selectedWard));
             }
-
-            if (productStoreId && !hasMultipleStores) {
-                // Nếu có productStoreId và không có nhiều cửa hàng, khởi tạo với cửa hàng liên kết
-                $(storeSelect).html(
-                    `<option value="${productStoreId}" selected>Đang tải cửa hàng...</option>`);
-                $(storeSelect).prop('disabled', true).trigger('change.select2');
-                fetchStores(); // Kiểm tra tính khả dụng của cửa hàng
-            } else {
-                fetchStores(); // Lấy tất cả cửa hàng hoặc cửa hàng gần nhất
-            }
-
-            updateStoreSelect();
 
             $(stateSelect).on('select2:select', function() {
                 if (isApplyingAddressSelection) {
                     return;
                 }
-                sessionStorage.removeItem('selected_store');
-                sessionStorage.removeItem('selected_store_manual');
-                console.log("State thay đổi thành:", $(this).val());
+                const stateId = $(this).val();
+                fetchCities(stateId, '');
                 fetchWards('');
-                fetchStores(true);
                 updateFullAddress();
             });
 
@@ -869,52 +592,30 @@
                 if (isApplyingAddressSelection) {
                     return;
                 }
-                sessionStorage.removeItem('selected_store');
-                sessionStorage.removeItem('selected_store_manual');
-                console.log("City thay đổi thành:", $(this).val());
-                fetchWards($(this).val());
-                fetchStores(true);
+                const cityId = $(this).val();
+                fetchWards(cityId);
                 updateFullAddress();
-                localStorage.setItem('to_city', $(this).val());
+                localStorage.setItem('to_city', cityId || '');
             });
 
             $(wardSelect).on('select2:select', function() {
                 if (isApplyingAddressSelection) {
                     return;
                 }
-                sessionStorage.removeItem('selected_store');
-                sessionStorage.removeItem('selected_store_manual');
-                console.log("Ward thay đổi thành:", $(this).val());
                 updateFullAddress();
                 const wardValue = $(this).val();
                 if (wardValue) {
                     const wardCode = wardValue.split('.')[0];
-                    console.log("WardCode:", wardCode);
                     localStorage.setItem('to_wc', wardCode);
-                    fetchStores(true);
                     $(document).trigger('calculateShippingFee');
                 } else {
-                    console.warn("Không có WardCode, không thể tính phí vận chuyển.");
                     localStorage.removeItem('to_wc');
-                    fetchStores(true);
-                }
-            });
-
-            $(storeSelect).on('select2:select', function() {
-                if (isAutoSelectingStore) {
-                    return;
-                }
-                console.log("Store thay đổi thành:", $(this).val());
-                if (!productStoreId || hasMultipleStores) {
-                    sessionStorage.setItem('selected_store', $(this).val());
-                    sessionStorage.setItem('selected_store_manual', '1');
                 }
             });
 
             $("#address_address_detail").on("input change", updateFullAddress);
             updateFullAddress();
         });
-
-        waitForStoreOptionsToLoadAndUpdate();
     });
 </script>
+
