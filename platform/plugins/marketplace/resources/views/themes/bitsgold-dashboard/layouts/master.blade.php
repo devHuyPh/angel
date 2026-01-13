@@ -533,7 +533,7 @@
   @stack('footer')
   {{-- {!! apply_filters(THEME_FRONT_FOOTER, null) !!} --}}
 
-  <script>
+    <script>
     document.addEventListener("DOMContentLoaded", function () {
       function checkNewNotifications() {
         fetch('/notifications/latest')
@@ -569,7 +569,7 @@
         });
       }
 
-      setInterval(checkNewNotifications, 10000);
+      checkNewNotifications();
     });
 
   </script>

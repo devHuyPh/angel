@@ -292,7 +292,7 @@
                     });
                 }
 
-                setInterval(checkNewNotifications, 10000);
+                checkNewNotifications();
             });
         </script>
     @endif
