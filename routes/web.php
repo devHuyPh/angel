@@ -294,6 +294,11 @@ Route::middleware([LocaleMiddleware::class])->get('/notifications/latest', funct
 
     if ($latestNotification) {
         $latestNotification->update(['viewed' => 1]); // Đánh dấu đã xem
+        // Đánh dấu các thông báo cũ chưa xem còn lại để tránh bật lại khi chuyển trang
+        CustomerNotification::where('customer_id', $customer->id)
+            ->where('viewed', 0)
+            ->where('id', '<>', $latestNotification->id)
+            ->update(['viewed' => 1]);
     }
 
     if ($latestNotification && $latestNotification->dessription) {
