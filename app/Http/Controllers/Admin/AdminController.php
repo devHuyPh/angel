@@ -59,6 +59,7 @@ class AdminController extends BaseController
     $customer->is_admin_active = 1; // Đặt is_admin_active = 1
     $customer->rank_id = $request->input('rank_id');
     $customer->rank_assigned_at = $request->input('rank_id') ? now() : null;
+    $customer->rank_expires_at = now()->addDays(30);
     $customer->save();
 
     return redirect()->route('rank.index')->with('success', 'Thêm mới thành công');
@@ -73,6 +74,7 @@ class AdminController extends BaseController
     $customer = Customer::findOrFail($id);
     $customer->rank_id = $request->input('rank_id');
     $customer->rank_assigned_at = $request->input('rank_id') ? now() : null;
+    $customer->rank_expires_at = now()->addDays(30);
     $customer->save();
 
     return redirect()->route('rank.index')->with('success', 'Cập nhật hạng thành công');
