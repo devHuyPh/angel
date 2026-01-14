@@ -106,7 +106,7 @@
                                  id="totalRevenue"
                                  class="form-control @error('total_revenue') is-invalid @enderror"
                                  value="{{ old('total_revenue') }}"
-                                 step="1000000"
+                                 step="10"
                                  required>
                           @error('total_revenue')
                               <span class="text-danger small d-block mt-1">{{ $message }}</span>

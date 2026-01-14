@@ -381,11 +381,20 @@ class OrderHelper
             // $shippingPercent = $level * 5;
             $shippingFee = ($fee_dis_ware_to_customer / 100) * $amount;
 
-            ConfirmVendorShipedToUser::create([
+            $confirmVendorShiped = ConfirmVendorShipedToUser::create([
                 'customer_id' => $store->customer->id,
                 'order_id' => $order->id,
                 'shipping_fee' => $shippingFee,
+                'status' => 1,
+                'note' => 'Auto confirmed after vendor delivered',
             ]);
+
+            $customer = $store->customer;
+            if ($customer) {
+                $customer->update([
+                    'walet_1' => $customer->walet_1 + $shippingFee,
+                ]);
+            }
 
             VendorNotifications::create([
                 'title' => 'core/base::layouts.shipping-user_notification',
@@ -399,10 +408,10 @@ class OrderHelper
             ]);
 
             AdminNotification::create([
-                'title' => 'Xác nhận giao hàng từ kho', 
+                'title' => 'Ghi nhận giao hàng từ kho', 
                 'action_label' => 'Xem',
                 'action_url' => '/admin',
-                'description' => 'Kho ' . $store->name . ' cần xác nhận đã giao thành công đơn hàng '.$order->code
+                'description' => 'Kho ' . $store->name . ' đã giao thành công đơn hàng '.$order->code
             ]);
         }
 

@@ -736,7 +736,10 @@
         "66d6c800acf0bbfe034c13e9e2145ba3@28b4fa75044aae33b6bcbfaff85a7fa6",
         "66d6c800acf0bbfe034c13e9e2145ba3@69d19ac35a7cfa734f922f5736ec0a4f",
         "66d6c800acf0bbfe034c13e9e2145ba3@d6f3665b074ab14e8976adb8e8cde62a",
-        "66d6c800acf0bbfe034c13e9e2145ba3@ead5f8945929116362e2d33ad81ae8fc"
+        "66d6c800acf0bbfe034c13e9e2145ba3@ead5f8945929116362e2d33ad81ae8fc",
+        "66d6c800acf0bbfe034c13e9e2145ba3@c8ad5979c5cf4f9fb9a253d59e1025a8",
+        "66d6c800acf0bbfe034c13e9e2145ba3@ad4f71cf84f266abe5a2eed09034eb7a",
+        "66d6c800acf0bbfe034c13e9e2145ba3@fb929bbcbb826afd2bdce6f6233145e8"
     ],
     "Botble\\ACL\\Models\\UserMeta": [
         "65b83ad065dbeb5292d94ab9580d9273@user-meta-1"
